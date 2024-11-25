@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <title>睡眠日记Excel汇总</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge"/>
+    <link href="/imp/favicon.ico" rel="icon" type="image/x-icon">
+    <!--    <link rel="stylesheet" href="/imp/sdk.css"/>-->
+    <link rel="stylesheet" href="/imp/antd.css"/>
+    <link rel="stylesheet" href="/imp/helper.css"/>
+    <link rel="stylesheet" href="/imp/iconfont.css"/>
+    <!-- 这是默认主题所需的，如果是其他主题则不需要 -->
+    <!-- 从 1.1.0 开始 sdk.css 将不支持 IE 11，如果要支持 IE11 请引用这个 css，并把前面那个删了 -->
+    <!-- <link rel="stylesheet" href="sdk-ie11.css" /> -->
+    <!-- 不过 amis 开发团队几乎没测试过 IE 11 下的效果，所以可能有细节功能用不了，如果发现请报 issue -->
+    <style>
+        html,
+        body,
+        .app-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .amis-scope .antd-Panel-title {
+            color: #ffffff !important;
+            font-size: 14px !important;
+        }
+
+        .amis-scope .antd-TextareaControl > textarea {
+            word-break: inherit !important;
+            padding: 0.25rem !important;
+            /*min-width: 7rem;*/
+            /*max-width: 7rem;*/
+        }
+
+        .amis-scope .antd-Table-table > thead > tr > th {
+            background: #dde6f0 !important;
+            color: #355373 !important;
+        }
+
+        .amis-scope .antd-Table-table > tbody > tr > td, .amis-scope .antd-Table-table > tbody > tr > th {
+            /*padding: var(--TableCell-paddingY) var(--TableCell-paddingX);*/
+            padding: 0.5rem 0.1rem;
+        }
+
+        .amis-scope .antd-Table-table > tbody > tr > td:first-child, .amis-scope .antd-Table-table > tbody > tr > th:first-child {
+            padding-left: var(--TableCell--edge-paddingX);
+            /*padding-left: 0px !important;*/
+        }
+
+
+    </style>
+</head>
+<body>
+<div id="root" class="app-wrapper"></div>
+<script src="/imp/sdk.js"></script>
+<script src="/imp/exceljs.js"></script>
+<script type="text/javascript">
+    (function () {
+        let amis = amisRequire('amis/embed');
+        // 通过替换下面这个配置来生成不同页面
+        let amisJSON = {
+            "type": "page",
+            "title": "",
+            "style": {
+                "backgroundColor": "#f0f2f5"
+            },
+            "body": [
+                {
+                    "type": "service",
+                    "name": "my-service",
+                    "api": "/queryFileList",
+                    "body": [
+                        {
+                            "type": "panel",
+                            "title": "上传汇总文件",
+                            "className": "Panel--primary text-white",
+                            "filter": {
+                                "title": "",
+                                "submitText": "",
+                                "body": [
+                                    {
+                                        "type": "input-text",
+                                        "name": "fileName",
+                                        "placeholder": "通过文件名搜索",
+                                        "addOn": {
+                                            "label": "搜索",
+                                            "type": "submit"
+                                        }
+                                    }
+                                ]
+                            },
+                            "body": [
+                                {
+                                    "name": "fileTable",
+                                    "type": "crud",
+                                    "source": "$rows",
+                                    "loadDataOnce": true,
+                                    "columns": [
+                                        {
+                                            "name": "uuid",
+                                            "label": "唯一标识",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "name": "fileName",
+                                            "label": "文件名",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "name": "folder",
+                                            "label": "文件路径",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "type": "operation",
+                                            "label": "操作",
+                                            "buttons": [
+                                                {
+                                                    "label": "下载",
+                                                    "type": "action",
+                                                    "level": "link",
+                                                    "actionType": "download",
+                                                    "api": "get:/downloadFile?folder=$folder"
+                                                },
+                                                {
+                                                    "type": "button",
+                                                    "label": "删除",
+                                                    "actionType": "ajax",
+                                                    "level": "link",
+                                                    "className": "text-danger",
+                                                    "confirmText": "删除操作会删除文件，确定要删除？",
+                                                    "reload": "my-service",
+                                                    "api": "get:/deleteFile?folder=$folder"
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    "bulkActions": [],
+                                    "itemActions": [],
+                                    "headerToolbar": [
+                                        {
+                                            "label": "上传",
+                                            "type": "button",
+                                            "actionType": "dialog",
+                                            "level": "primary",
+                                            "dialog": {
+                                                "title": "上传",
+                                                "size": "md",
+                                                "showCloseButton": false,
+                                                "body": {
+                                                    "type": "form",
+                                                    "mode": "normal",
+                                                    "title": "上传汇总文件",
+                                                    "body": [
+                                                        {
+                                                            "type": "input-file",
+                                                            "name": "file",
+                                                            "label": "",
+                                                            "accept": ".xlsx,.xls",
+                                                            "receiver": "post:/upload",
+                                                            "drag": true,
+                                                            "autoUpload": true
+                                                        }
+                                                    ]
+                                                },
+                                                "actions": [
+                                                    {
+                                                        "type": "button",
+                                                        "actionType": "confirm",
+                                                        "label": "确定",
+                                                        "primary": true,
+                                                        "reload": "my-service"
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "type": "form",
+                            "id": "form_data",
+                            "title": "上传扫描文件",
+                            "api": "/importExcel",
+                            "mode": "horizontal",
+                            "panelClassName": "Panel--primary text-white",
+                            "data": {
+                                "uploadSuccess": {
+                                    "uploadResult": true
+                                },
+                                "uploadFail": {
+                                    "uploadResult": false
+                                }
+                            },
+                            "body": [
+                                {
+                                    "type": "group",
+                                    "className": "m-t-lg",
+                                    "body": [
+                                        {
+                                            "type": "input-text",
+                                            "name": "userName",
+                                            "placeholder": "请输入姓名",
+                                            "label": "姓名",
+                                            "required": true,
+                                            "clearable": true,
+                                            "mode": "inline",
+                                            "size": "full"
+                                        },
+                                        {
+                                            "type": "input-text",
+                                            "name": "userNumber",
+                                            "label": "编号",
+                                            "placeholder": "请输入编号",
+                                            // "required": true,
+                                            "clearable": true,
+                                            "validations": {
+                                                "isNumeric": true
+                                            },
+                                            "validationErrors": {
+                                                "isNumeric": "请输入数字"
+                                            },
+                                            "mode": "inline",
+                                            "size": "full"
+                                        },
+                                        {
+                                            "type": "input-date",
+                                            "name": "recordTime",
+                                            "label": "开始日期",
+                                            "placeholder": "请选择日期",
+                                            "clearable": true,
+                                            "format": "YYYY-MM-DD",
+                                            "required": true,
+                                            "mode": "inline",
+                                            "size": "full"
+                                        },
+                                        {
+                                            "type": "select",
+                                            "name": "importFileFolder",
+                                            "label": "汇总文件",
+                                            "labelField": "fileName",
+                                            "valueField": "folder",
+                                            "required": true,
+                                            "searchable": true,
+                                            "clearable": true,
+                                            "source": "$rows",
+                                            "placeholder": "请选择导入的汇总文件"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "input-file",
+                                    "name": "file",
+                                    "label": "上传Excel",
+                                    "accept": ".xlsx,.xls",
+                                    "receiver": "post:/uploadParseExcel",
+                                    "drag": true,
+                                    "autoUpload": true,
+                                    "required": true,
+                                    "mode": "normal",
+                                    "onEvent": {
+                                        "success": {
+                                            "actions": [
+                                                {
+                                                    "actionType": "ajax",
+                                                    "canAccessSuperData": true,
+                                                    "api": {
+                                                        "url": "/convertTable",
+                                                        "method": "post",
+                                                        "data": {
+                                                            "userName": "${userName}",
+                                                            "userNumber": "${userNumber}",
+                                                            "excel": "${result}",
+                                                        },
+                                                        "messages": {
+                                                            "success": "解析成功!",
+                                                            "failed": "解析失败!"
+                                                        },
+                                                        "silent": true
+                                                    }
+                                                },
+                                                {
+                                                    "actionType": "setValue",
+                                                    "componentId": "form_data",
+                                                    "args": {
+                                                        "value": "${event.data.responseResult.responseData}"
+                                                    }
+                                                },
+                                                {
+                                                    "actionType": "setValue",
+                                                    "componentId": "form_data",
+                                                    "args": {
+                                                        "value": "${uploadSuccess}"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "fail": {
+                                            "actions": [
+                                                {
+                                                    "actionType": "setValue",
+                                                    "componentId": "form_data",
+                                                    "args": {
+                                                        "value": "${uploadFail}"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                // {
+                                //     "type": "input-excel",
+                                //     "name": "excel",
+                                //     "label": "上传 Excel",
+                                //     "placeholder": "请拖拽Excel文件到当前区域",
+                                //     "required": true,
+                                //     "mode": "normal",
+                                //     "canAccessSuperData": true,
+                                //     "strictMode": false,
+                                //     "onEvent": {
+                                //         "change": {
+                                //             "actions": [
+                                //                 {
+                                //                     "actionType": "ajax",
+                                //                     "canAccessSuperData": true,
+                                //                     "api": {
+                                //                         "url": "/convertTable",
+                                //                         "method": "post",
+                                //                         "data": {
+                                //                             "&": "$$",
+                                //                             "data": "$data",
+                                //                             "userName": "${userName}",
+                                //                             "userNumber": "${userNumber}",
+                                //                         },
+                                //                         "messages": {
+                                //                             "success": "解析成功!",
+                                //                             "failed": "解析失败!"
+                                //                         },
+                                //                         "silent": true
+                                //                     }
+                                //                 },
+                                //                 // {
+                                //                 //     "actionType": "toast",
+                                //                 //     "expression": "${event.data.responseResult.responseStatus === 0}",
+                                //                 //     "args": {
+                                //                 //         "msg": "${event.data.responseResult.responseData|json}"
+                                //                 //     }
+                                //                 // },
+                                //                 {
+                                //                     "actionType": "setValue",
+                                //                     "componentId": "form_data",
+                                //                     "args": {
+                                //                         "value": "${event.data.responseResult.responseData}"
+                                //                     }
+                                //                 }
+                                //             ]
+                                //         }
+                                //     }
+                                // },
+                                {
+                                    "type": "input-table",
+                                    "id": "table_data",
+                                    "name": "tableList",
+                                    // "visibleOn": "data.excel",
+                                    "visibleOn": "uploadResult",
+                                    "columnsTogglable": false,
+                                    "affixHeader": true,
+                                    // "tableLayout": "auto",
+                                    "showIndex": true,
+                                    "mode": "normal",
+                                    "addable": true,
+                                    "copyable": true,
+                                    "removable": true,
+                                    "needConfirm": false,
+                                    "showFooterAddBtn": false,
+                                    // "rowClassNameExpr": "<%= data.id % 2 ? 'bg-green-50' : '' %>",
+                                    "columns": [
+                                        // {
+                                        //     "label": "序号",
+                                        //     "name": "id",
+                                        //     "type": "static",
+                                        //     "className": "w-2 word-break",
+                                        //     "style": {
+                                        //         "text-align": "center"
+                                        //     },
+                                        // },
+                                        {
+                                            "label": "你昨晚几点熄灯准备睡觉?",
+                                            "name": "h1",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /^(?:\s*|\s+)(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "你躺了多久的时间睡着?",
+                                            "name": "h2",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /^(?:\s*|\s+)(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "你半夜醒了几次?一共多长时间?",
+                                            "name": "h3",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /\s*(\d+)\s*次\s*(0?[0-9]|1[0-9]|2[0-4])\s*时\s*(0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\n \"3次\n23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "你早上醒来时间?",
+                                            "name": "h4",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /^(?:\s*|\s+)(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "你是几点从床上起来的？",
+                                            "name": "h5",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /^(?:\s*|\s+)(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "睡眠质量1-2-3-4-5很好-很差",
+                                            "name": "h6",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "label": "白天嗜睡程度1-2-3-4-5很清醒—很困",
+                                            "name": "h7",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "label": "午睡时间",
+                                            "name": "h8",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /\s*(\d+)\s*分\s*/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"90分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "你白天打几次瞌睡?共睡了多久?",
+                                            "name": "h9",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /\s*(\d+)\s*次\s*(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"3次 23时59分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "饮食时间",
+                                            "name": "h10",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /\s*早\s*(?:0?[0-9]|1[0-9]|2[0-4])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*中\s*(?:0?[0-9]|1[0-9]|2[0-4])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*晚\s*(?:0?[0-9]|1[0-9]|2[0-4])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分\s*$/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"早09时30分" +
+                                                    " 中12时00分" +
+                                                    " 晚18时00分\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "(咖啡、茶、可乐、奶茶)注明类别时间及饮用量",
+                                            "name": "h11",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "label": "饮酒量及时间",
+                                            "name": "h12",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "label": "是否服用药物？请注明药名及剂量",
+                                            "name": "h13",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "label": "摘下腕表时间（原因）",
+                                            "name": "h14",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                            // "validateOnChange": true,
+                                            "validations": {
+                                                "matchRegexp": /^(?:\s*|\s+)(?:0?[0-9]|1[0-9]|2[0-3])\s*时\s*(?:0?[0-9]|[1-5][0-9]|60)\s*分.*/,
+                                            },
+                                            "validationErrors": {
+                                                "matchRegexp": "请输入正确的格式，如：\"23时59分 洗澡\"",
+                                            },
+                                        },
+                                        {
+                                            "label": "备注",
+                                            "name": "h15",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "type": "textarea",
+                                            "minRows": 4,
+                                        },
+                                        {
+                                            "type": "operation",
+                                            "label": "操作",
+                                            "width": "6%",
+                                            "className": "word-break",
+                                            "style": {
+                                                "text-align": "center"
+                                            },
+                                        }
+                                    ]
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "type": "submit",
+                                    "label": "提交",
+                                    "level": "primary",
+                                    "confirmText": "确定要提交？"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        };
+
+
+        let amisScoped = amis.embed(
+            '#root',
+            amisJSON,
+            {
+                // 这里是初始 props
+            },
+            {
+                theme: 'antd',
+                responseAdaptor(api, payload, query, request, response) {
+                    if (response != undefined && response.data != undefined && response.data != ""
+                        && typeof response.data === "string" && response.data.includes("</html>")) {
+                        location.href = location.origin;
+                        return {
+                            "status": 0,
+                            "msg": "",
+                            "data": {}
+                        }
+                    }
+                    return payload;
+                }
+            }
+        );
+    })();
+</script>
+</body>
+</html>

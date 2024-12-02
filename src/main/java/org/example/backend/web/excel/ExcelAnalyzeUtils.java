@@ -31,9 +31,27 @@ public class ExcelAnalyzeUtils {
 
     public static final String[] HEAD = new String[]{"你昨晚几点熄灯准备睡觉?", "你躺了多久的时间睡着?", "你半夜醒了几次?一共多长时间?", "你早上醒来时间?", "你是几点从床上起来的？", "睡眠质量1-2-3-4-5很好-很差", "白天嗜睡程度1-2-3-4-5很清醒—很困", "午睡时间", "你白天打几次瞌睡?共睡了多久?", "饮食时间", "(咖啡、茶、可乐、奶茶)注明类别时间及饮用量", "饮酒量及时间", "是否服用药物？请注明药名及剂量", "摘下腕表时间（原因）", "备注"};
 
-    public static final Map<String, String> HEAD_MAP = new ConcurrentHashMap<>();
+    public static final Map<String, String> HEAD_MAP = new ConcurrentHashMap<String, String>() {{
+        put("你昨晚几点熄灯准备睡觉?", "h1");
+        put("你躺了多久的时间睡着?", "h2");
+        put("你半夜醒了几次?一共多长时间?", "h3");
+        put("你早上醒来时间?", "h4");
+        put("你是几点从床上起来的？", "h5");
+        put("睡眠质量1-2-3-4-5很好-很差", "h6");
+        put("白天嗜睡程度1-2-3-4-5很清醒—很困", "h7");
+        put("午睡时间", "h8");
+        put("你白天打几次瞌睡?共睡了多久?", "h9");
+        put("饮食时间", "h10");
+        put("(咖啡、茶、可乐、奶茶)注明类别时间及饮用量", "h11");
+        put("饮酒量及时间", "h12");
+        put("是否服用药物？请注明药名及剂量", "h13");
+        put("摘下腕表时间（原因）", "h14");
+        put("备注", "h15");
+    }};
 
-    private static final Map<String, Function<Map<String, String>, String>> headMap = new ConcurrentHashMap<>();
+    private static final Map<String, Function<Map<String, String>, String>> headMap = new ConcurrentHashMap<String, Function<Map<String, String>, String>>(){{
+
+    }};
 
     public static void main(String[] args) throws Exception {
         List<Pair<String, List<List<String>>>> list = showExcel("C:\\Users\\yyadmin\\Desktop\\郑雅文(1).xlsx");

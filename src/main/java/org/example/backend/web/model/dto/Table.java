@@ -11,8 +11,20 @@ import lombok.Data;
 public class Table {
 
     private Integer id;
-    private String H11;
-    private String H12;
-    private String H13;
+    private String h1;
+    private String h2;
+    private String h3;
+    private String h4;
+    private String h5;
+    private String h6;
+    private String h7;
+    private String h8;
+    private String h9;
+    private String h10;
+    private String h11;
+    private String h12;
+    private String h13;
+    private String h14;
+    private String h15;
 
 }

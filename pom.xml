@@ -34,7 +34,7 @@
         <jwt.version>0.9.1</jwt.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
         <commons-pool2.version>2.9.0</commons-pool2.version>
-        <commons-compress.version>1.13</commons-compress.version>
+        <commons-compress.version>1.27.1</commons-compress.version>
         <commons-configuration2.version>2.7</commons-configuration2.version>
     </properties>
 

@@ -145,9 +145,6 @@ public class ImportExcelDto {
                 field.set(table, v);
             }
             table.setId(id);
-            table.setH11("0");
-            table.setH12("0");
-            table.setH13("无");
 
             tableList.add(table);
             id++;
